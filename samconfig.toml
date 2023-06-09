@@ -1,0 +1,87 @@
+version=0.1
+
+[default.validate.parameters]
+region = "us-east-1"
+template_file = "local-template.yml"
+
+[default.build.parameters]
+parameter_overrides = "CodeUri=."
+template_file = "local-template.yml"
+
+[default.local_start_api.parameters]
+template_file = "local-template.yml"
+docker_network = "centro-network"
+# use this to save containers' states and reuse them
+# warm_containers = "EAGER"
+port = 8080
+
+
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "sam-app-rrhh-20221215"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-fsb24jhtnj04"
+s3_prefix = "sam-app-rrhh-20221215"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "CodeUri=\"target/human-management-api-1.0.0.jar\" DatabaseServer=\"aw-db-rdpsql-ue1-dev-cc-rrhh-1.c8zzuvd6fmjl.us-east-1.rds.amazonaws.com:5432\" DatabaseSchema=\"pghc\" DatabaseUser=\"gcueto\" DatabasePassword=\"c43t0$\" DefaultCorsOrigins=\"*\""
+image_repositories = []
+confirm_changeset = true
+[dev.validate.parameters]
+region = "us-east-1"
+
+[dev.build.parameters]
+parameter_overrides = "CodeUri=."
+
+[dev.deploy.parameters]
+stack_name = "aw-dpl-cldfr-ue1-dev-cc-reqperajusal-01"
+parameter_overrides = [
+  "CodeUri=target/human-management-api-1.0.0.jar",
+  "Stage=dev",
+  "MainVPC=vpc-017af747b609fc057",
+  "LambdaRole=r_prpyecto_rrhh_lambda_trazabilidad",
+  "LambdaSubnets=subnet-056aa713c867d6261",
+  "DBSubnetGroupName=aw-db-rdsng-eu2-dev-cc-generalprivada-01",
+]
+s3_bucket = "aw-sta-s3bkt-ue1-dev-cc-reqperajusal-01"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+tags = [
+  "PAIS=PERU",
+  "DIVISION=CENTRO_CORPORATIVO",
+  "EMPRESA=CENTRO_CORPORATIVO",
+  "AREA=GESTION_HUMANA",
+  "PROYECTO=DIG_REQ_PER_AJUS_SAL",
+  "AMBIENTE=DEV",
+]
+
+[prod.validate.parameters]
+region = "us-east-1"
+
+[prod.build.parameters]
+parameter_overrides = "CodeUri=."
+
+[prod.deploy.parameters]
+stack_name = "aw-dpl-cldfr-ue1-prd-cc-reqperajusal-01"
+# TODO: Change these parameters in production
+parameter_overrides = [
+  "CodeUri=target/human-management-api-1.0.0.jar",
+  "Stage=prd",
+  "MainVPC=vpc-017af747b609fc057",
+  "LambdaRole=default-role",
+  "LambdaSubnets=subnet-056aa713c867d6261",
+  "DBSubnetGroupName=aw-db-rdsng-eu2-dev-cc-generalprivada-01",
+]
+s3_bucket = "aw-sta-s3bkt-ue1-prd-cc-reqperajusal-01"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+tags = [
+  "PAIS=PERU",
+  "DIVISION=CENTRO_CORPORATIVO",
+  "EMPRESA=CENTRO_CORPORATIVO",
+  "AREA=GESTION_HUMANA",
+  "PROYECTO=DIG_REQ_PER_AJUS_SAL",
+  "AMBIENTE=PRD",
+]
+

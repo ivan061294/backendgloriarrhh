@@ -1,0 +1,557 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Human Management Application Stack
+
+  Centro Lambda functions solutions for Gloria group.
+
+Parameters:
+  CodeUri:
+    Description: CodeUri variable
+    Type: String
+    Default: target/human-management-api-1.0.0.jar
+  DatabaseServer:
+    Description: Database Server
+    Type: String
+    #Default: centro-postgres-database.ca9yjy0jz5xs.us-east-1.rds.amazonaws.com:5432
+    Default: aw-db-rdpsql-ue1-dev-cc-rrhh-1.c8zzuvd6fmjl.us-east-1.rds.amazonaws.com:5432
+  DatabaseSchema:
+    Description: Database Schema
+    Type: String
+    Default: pghc
+  DatabaseUser:
+    Description: Database Access Username
+    Type: String
+    Default: gcueto
+  DatabasePassword:
+    Description: Database Access Password
+    Type: String
+    Default: c43t0$
+  DefaultCorsOrigins:
+    Description: Default CORS origins
+    Type: String
+    Default: "'*'"
+  Subnet1:
+    Description: Default subnet 1
+    Type: String
+    Default: subnet-056aa713c867d6261
+  Subnet2:
+    Description: Default subnet2
+    Type: String
+    Default: subnet-06cb7a877cfa93a0e
+  SecurityGroup:
+    Description: Default securitygroup
+    Type: String
+    Default: sg-0e1759b5480572d5f
+
+Globals:
+  Function:
+    CodeUri: !Sub ${CodeUri}
+    Runtime: java11
+    Timeout: 100
+    MemorySize: 512
+    Environment:
+      Variables:
+        AWS_DEFAULT_CORS_ORIGINS: !Ref DefaultCorsOrigins
+        AWS_RDS_DB_SERVER: !Ref DatabaseServer
+        AWS_RDS_DB_SCHEMA: !Ref DatabaseSchema
+        AWS_RDS_USER: !Ref DatabaseUser
+        AWS_RDS_PASSWORD: !Ref DatabasePassword
+        #AWS_SES_FROM_MAIL: solicitudes@centro.com.pe
+        AWS_SES_FROM_EMAIL: gustavo.cueto@centro.com.pe
+        AWS_SES_FROM_NAME: Sistema de Requerimiento de Personal
+        AWS_SES_SMTP_HOST: email-smtp.us-east-1.amazonaws.com
+        AWS_SES_SMTP_USERNAME: AKIAVIFZWE3GXPSK4GFV
+        AWS_SES_SMTP_PASSWORD: BBZFVG3dfPWG+22oL1chNsIuw5WByZEJRMMbrC5oPT7r
+        AWS_S3_FILES_BUCKET_NAME: aw-sta-s3bkt-ue1-dev-cc-reqperajusal-02
+        AWS_S3_BATCH_FILES_BUCKET_NAME: sam-app-rrhh-20221215-batchfilesbucket-vzful0lrz31v
+        AWS_CLOUDFRONT_WEB_URL: https://d7ofeisssod1b.cloudfront.net
+        #AWS_S3_BATCH_FILES_BUCKET_NAME: aw-sta-s3bkt-ue1-dev-cc-reqperajusal-03
+
+  # Api:
+  #   Cors:
+  #     AllowMethods: "'*'"
+  #     AllowHeaders: "'*'"
+  #     AllowOrigin: "'*'"
+
+Resources:
+  # CognitoUserPool:
+  #   Type: AWS::Cognito::UserPool
+  #   Properties:
+  #     UserPoolName: aw-ath-cgnpl-ue1-dev-cc-reqperajusal-01
+  #     AdminCreateUserConfig:
+  #       AllowAdminCreateUserOnly: true
+  #     Policies:
+  #       PasswordPolicy:
+  #         MinimumLength: 4
+  #       Schema:
+  #         - AttributeDataType: String
+  #           Name: employeeCode
+  #           Required: true
+  #         - AttributeDataType: String
+  #           Name: role
+  #           Required: true
+  # CognitoUserPoolClient:
+  #   Type: AWS::Cognito::UserPoolClient
+  #   Properties:
+  #     UserPoolId: !Ref CognitoUserPool
+  #     ClientName: aw-ath-cgncl-ue1-dev-cc-reqperajusal-01
+  #     GenerateSecret: true
+
+  BatchFilesBucket:
+    Type: AWS::S3::Bucket
+
+  APIGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: aw-int-apirs-ue1-dev-cc-reqperajusal-01
+      StageName: dev
+      BinaryMediaTypes:
+      #   - application~1json
+        - multipart~1form-data
+      Cors:
+        # AllowMethods: "'*'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,x-requested-with,X-Amz-Security-Token'"
+        # AllowOrigin: "'*'"
+        AllowMethods: "'GET,POST,OPTIONS,PUT,PATCH,DELETE'"
+        # AllowMethods: "'*'"
+        #AllowHeaders: "'content-type,X-Custom-Header'"
+        AllowOrigin: "'*'"
+        AllowCredentials: "'*'"
+  # API Requests  
+
+  GetSocieties:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.society.GetSocieties
+      Description: Get Societies
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /societies
+            Method: get
+            RequestParameters:
+              - method.request.querystring.societyCode:
+                  Required: false
+  GetPostByCode:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.post.GetPostByCode
+      Description: Get a Post by Code
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /posts/{code}
+            Method: get
+  GetPostByCodeEmployee:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.post.GetPostsByUserEmail
+      Description: Get a Post by Code Employee
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /posts/employee/{code}
+            Method: get
+  GetPostsByFatherFamilyName:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.post.GetPostsByFatherFamilyName
+      Description: Get a small list of Posts by Father Family Name
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /posts
+            Method: get
+            RequestParameters:
+              - method.request.querystring.societyCode:
+                  Required: false
+              - method.request.querystring.divisionCode:
+                  Required: false
+              - method.request.querystring.managementId:
+                  Required: false
+              - method.request.querystring.organizationalUnitCode:
+                  Required: false
+              - method.request.querystring.managementId:
+                  Required: false
+              - method.request.querystring.physicalLocationCode:
+                  Required: false
+              - method.request.querystring.costCenterCode:
+                  Required: false
+              - method.request.querystring.postTypeId:
+                  Required: false
+              - method.request.querystring.fatherFamilyName:
+                  Required: true
+              - method.request.querystring.maxSize:
+                  Required: false
+  GetActionsByRequest:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.action.GetActionsByRequest
+      Description: Get Actions by Request
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /requests/{id}/actions
+            Method: get
+  PostActions:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.action.PostActions
+      Description: Post a list of Actions
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /actions
+            Method: post
+  PostRequest:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.request.PostRequest
+      Description: Post a Request
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /requests
+            Method: post
+  PostConfig:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.society.PostConfig
+      Description: Post a Config Request
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /settings
+            Method: post
+  PostRequest2:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.request.PostRequest2
+      Description: Post a Request
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /requests2
+            Method: post
+  PostRequest3:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.request.PostRequest3
+      Description: Post a Request
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /requests3
+            Method: post
+  GetRequestsByParams:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.request.GetRequestsByParams
+      Description: Get Requests By Params Society
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /requests/control
+            Method: get
+            RequestParameters:
+              - method.request.querystring.perns:
+                  Required: false
+              - method.request.querystring.bukrs:
+                  Required: false
+  GetRequestByParamsOnCourse:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.request.GetRequestByParamsOnCourse
+      Description: Get Requests On Course By Params Society
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /requestsoncourse/control
+            Method: get
+            RequestParameters:
+              - method.request.querystring.perns:
+                  Required: false
+              - method.request.querystring.bukrs:
+                  Required: false                
+  GetRequestsfiles:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.request.GetRequestFiles
+      Description: Get Requests By Params Society
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /requests/files
+            Method: get
+            RequestParameters:
+              - method.request.querystring.idrequest:
+                  Required: true
+  GetRequest:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.request.GetRequest
+      Description: Get Request Information By Id
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /requests/{id}
+            Method: get
+  GetUsersByParams:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.user.GetUsersByParams
+      Description: Get Users
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /users
+            Method: get
+            RequestParameters:
+              - method.request.querystring.page:
+                  Required: false
+              - method.request.querystring.size:
+                  Required: false
+              - method.request.querystring.role:
+                  Required: false
+              - method.request.querystring.fatherFamilyName:
+                  Required: false
+              - method.request.querystring.option:
+                  Required: true              
+  PostUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.user.PostUser
+      Description: Post User
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpPost:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /users
+            Method: post
+            RequestParameters:
+              - method.request.querystring.option:
+                  Required: true
+  PatchUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.user.PatchUser
+      Description: Patch User
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpPatch:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /users
+            Method: patch
+            RequestParameters:
+              - method.request.querystring.option:
+                  Required: true
+              - method.request.querystring.prevSociety:
+                  Required: false
+              - method.request.querystring.prevDivision:
+                  Required: false
+              - method.request.querystring.prevSubdivision:
+                  Required: false
+  DeleteUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.user.DeleteUser
+      Description: Delete a User
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpDelete:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /users/{code}
+            Method: delete
+            RequestParameters:
+              - method.request.querystring.option:
+                  Required: true
+              - method.request.querystring.societyCode:
+                  Required: false
+              - method.request.querystring.divisionCode:
+                  Required: false
+              - method.request.querystring.subdivisionCode:
+                  Required: false
+  GetReportByParams:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.report.GetReportByParams
+      Description: Get A Report
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        HttpGet:
+          Type: Api
+          Properties:
+            RestApiId: !Ref APIGateway
+            Path: /report
+            Method: get
+            RequestParameters:
+              - method.request.querystring.option:
+                  Required: true
+              - method.request.querystring.month:
+                  Required: false
+              - method.request.querystring.year:
+                  Required: false
+  LoadData:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: pe.com.centro.modules.load.LoadData
+      Description: Load data
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref SecurityGroup
+        SubnetIds:
+          - !Ref Subnet1
+          - !Ref Subnet2
+      Events:
+        S3Upload:
+          Type: S3
+          Properties:
+            Bucket: !Ref BatchFilesBucket
+            Events: s3:ObjectCreated:*

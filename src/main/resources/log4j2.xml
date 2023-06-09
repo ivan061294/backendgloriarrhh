@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration strict="true" status="WARN"
+               xmlns="http://logging.apache.org/log4j/2.0/config"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://logging.apache.org/log4j/2.0/config
+                                   https://raw.githubusercontent.com/apache/logging-log4j2/master/log4j-core/src/main/resources/Log4j-config.xsd"
+               packages="com.amazonaws.services.lambda.runtime.log4j2">
+    <Appenders>
+        <Appender type="Lambda" name="Lambda">
+            <Layout type="PatternLayout">
+                <Pattern>
+                    <!-- %d{yyyy-MM-dd HH:mm:ss.SSS} %style{[%X{AWSRequestId}]}{bright,yellow} %highlight{%-5p}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=green bold, TRACE=blue} %style{%c{1.}}{cyan} : %m%n -->
+                    %d{yyyy-MM-dd HH:mm:ss.SSS}|%X{AWSRequestId}|%-5p|%c{1.}(%method:%L)|: %m%n
+                </Pattern>
+            </Layout>
+        </Appender>
+    </Appenders>
+    <Loggers>
+        <Logger name="software.amazon.awssdk" level="WARN"/>
+        <Logger name="software.amazon.awssdk.request" level="DEBUG"/>
+        <Root level="@log.level@">
+            <AppenderRef ref="Lambda"/>
+        </Root>
+    </Loggers>
+</Configuration>

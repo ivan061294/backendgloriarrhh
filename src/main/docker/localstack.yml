@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  centro-localstack:
+    container_name: centro-localstack
+    image: localstack/localstack-full
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+      - "8080:8080"
+    environment:
+      - SERVICES=s3,ses,lambda,apigateway,cloudwatch,cloudformation
+      - LAMBDA_EXECUTOR=docker-reuse
+      - DATA_DIR=/tmp/localstack/data
+      - PORT_WEB_UI=8080
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    networks:
+      - centro-network
+    volumes:
+      - centro-localstack-data:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  centro-postgres-database:
+    container_name: centro-db
+    build: .
+    image: centro-data-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=GLORIA_DEV_TEST
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - centro-network
+    volumes:
+      - centro-postgres-data:/var/lib/postgresql/data
+
+networks:
+  centro-network:
+    name: centro-network
+
+volumes:
+  centro-localstack-data:
+  centro-postgres-data:

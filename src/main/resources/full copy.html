@@ -1,0 +1,56 @@
+
+<head>
+    <style>
+        .table-request{
+                    }
+        .table-request th{
+            border:1px solid #002060;
+            padding: 5px;
+            text-align: center;
+            background: #002060;
+            color:#fff;
+        }
+        .table-request td{
+            border:1px solid #002060;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .body-mail{
+            margin: 10px;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="body-mail">
+        Estimado(a).
+        <br>
+        @@usuarioDestino, la Alta dirección a aprobado los siguientes requerimientos.
+        <br>
+        <br>
+        <table class="table-request">
+
+            <tr>
+                <th>Empresa</th>
+                <th>ID</th>
+                <th>Posición</th>
+                <th>Unidad Organizativa</th>
+            </tr>
+            
+            <tr>
+                <td>@@empresa</td>
+                <td>@@idRequerimiento</td>
+                <td>@@posicionSolicitada</td>
+                <td>@@unidadOrganizativa</td>
+            </tr>
+
+        </table>
+        <br>
+        <p>Para mayor detalle, entrar a la <a href='@@url'>Plataforma digital de requerimientos</a></p>
+        <br>
+        Atentamente,
+        <br>
+        GERENCIA CORPORATIVA COMPENSACIONES Y EFECTIVIDAD ORGANIZACIONAL
+    </div> 
+</body>
